@@ -3,7 +3,6 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-brightgreen?style=for-the-badge&logo=fastapi)](https://github.com/fastapi/fastapi)
 [![Python](https://img.shields.io/badge/Python-3.14-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)]()
-[![Issues](https://img.shields.io/github/issues/<your-username>/<your-repo-name>?style=for-the-badge)](https://github.com/<NishantDas0079>/<Universal-Code-Assistant>/issues)
 
 AI‑powered, multi‑language code review assistant built with FastAPI.  
 Paste or upload code in different languages, get instant static analysis, see detected bugs and security issues, and view suggested safe fixes in a modern interactive web UI.
