@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Universal AI Code Review Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0b1020;
+      --bg2: #10192f;
+      --card: rgba(15, 23, 42, 0.72);
+      --card2: rgba(17, 24, 39, 0.9);
+      --text: #e5eefc;
+      --muted: #94a3b8;
+      --border: rgba(148,163,184,0.18);
+      --primary: #7c3aed;
+      --primary2: #06b6d4;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+      --codebg: #020617;
+      --input: rgba(2, 6, 23, 0.72);
+    }
+
+    [data-theme="light"]{
+      --bg: #eef2ff;
+      --bg2: #dbeafe;
+      --card: rgba(255,255,255,0.78);
+      --card2: rgba(255,255,255,0.95);
+      --text: #0f172a;
+      --muted: #475569;
+      --border: rgba(15,23,42,0.12);
+      --shadow: 0 20px 50px rgba(15,23,42,0.12);
+      --codebg: #0f172a;
+      --input: rgba(255,255,255,0.92);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:'Inter',sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top left, rgba(124,58,237,0.34), transparent 30%),
+        radial-gradient(circle at top right, rgba(6,182,212,0.24), transparent 25%),
+        linear-gradient(135deg, var(--bg), var(--bg2));
+    }
+
+    .shell{
+      max-width:1400px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      margin-bottom:24px;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .logo{
+      width:52px;
+      height:52px;
+      border-radius:16px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      display:grid;
+      place-items:center;
+      box-shadow: var(--shadow);
+      font-weight:800;
+      color:white;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:1.35rem;
+    }
+
+    .brand p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:0.92rem;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn, select, input[type="file"]{
+      border:none;
+      outline:none;
+      border-radius:14px;
+      padding:12px 16px;
+      font:inherit;
+    }
+
+    .btn{
+      cursor:pointer;
+      color:white;
+      background:linear-gradient(135deg, var(--primary), #4f46e5);
+      box-shadow: var(--shadow);
+      transition:transform .2s ease, opacity .2s ease;
+    }
+
+    .btn:hover{ transform:translateY(-1px); opacity:.96; }
+    .btn.secondary{
+      background: transparent;
+      color:var(--text);
+      border:1px solid var(--border);
+      box-shadow:none;
+      backdrop-filter: blur(12px);
+    }
+
+    select, input[type="file"]{
+      background:var(--input);
+      color:var(--text);
+      border:1px solid var(--border);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.5fr 0.9fr;
+      gap:22px;
+    }
+
+    .panel, .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel{
+      border-radius:24px;
+      overflow:hidden;
+    }
+
+    .panel-head{
+      padding:18px 20px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08));
+    }
+
+    .panel-head h2{
+      margin:0;
+      font-size:1.05rem;
+    }
+
+    .panel-head span{
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    .panel-body{
+      padding:20px;
+    }
+
+    .dropzone{
+      border:1.5px dashed rgba(124,58,237,0.55);
+      border-radius:20px;
+      padding:24px;
+      text-align:center;
+      background: rgba(2,6,23,0.14);
+      transition: .2s ease;
+      margin-bottom:18px;
+    }
+
+    .dropzone.dragover{
+      background: rgba(124,58,237,0.12);
+      transform: scale(1.01);
+    }
+
+    .dropzone h3{
+      margin:8px 0 6px;
+      font-size:1.02rem;
+    }
+
+    .dropzone p{
+      margin:0;
+      color:var(--muted);
+    }
+
+    textarea{
+      width:100%;
+      min-height:350px;
+      resize:vertical;
+      border-radius:18px;
+      border:1px solid var(--border);
+      background:var(--codebg);
+      color:#e2e8f0;
+      padding:16px;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size:.95rem;
+      line-height:1.55;
+      outline:none;
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .toolbar .left, .toolbar .right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+      margin-top:18px;
+    }
+
+    .stat{
+      border-radius:18px;
+      padding:16px;
+      background:var(--card2);
+      border:1px solid var(--border);
+    }
+
+    .stat .label{
+      color:var(--muted);
+      font-size:.86rem;
+      margin-bottom:8px;
+    }
+
+    .stat .value{
+      font-size:1.35rem;
+      font-weight:800;
+    }
+
+    .side{
+      display:grid;
+      gap:22px;
+    }
+
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+
+    .tab{
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+    }
+
+    .tab.active{
+      background:linear-gradient(135deg, var(--primary), #4f46e5);
+      color:white;
+      border-color:transparent;
+    }
+
+    .tab-content{
+      display:none;
+    }
+
+    .tab-content.active{
+      display:block;
+    }
+
+    .issue{
+      border-left:4px solid var(--warning);
+      background: rgba(245,158,11,0.08);
+      padding:14px;
+      border-radius:14px;
+      margin-bottom:12px;
+    }
+
+    .issue.high{ border-left-color:var(--danger); background:rgba(239,68,68,0.08); }
+    .issue.medium{ border-left-color:var(--warning); }
+    .issue.low{ border-left-color:var(--success); background:rgba(34,197,94,0.08); }
+
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      background:var(--codebg);
+      color:#e2e8f0;
+      border-radius:16px;
+      padding:16px;
+      border:1px solid var(--border);
+      min-height:280px;
+      max-height:600px;
+      overflow:auto;
+      font-family:'JetBrains Mono', Consolas, monospace;
+      font-size:.92rem;
+      line-height:1.55;
+    }
+
+    .empty{
+      color:var(--muted);
+      font-style:italic;
+    }
+
+    .footer{
+      margin-top:20px;
+      color:var(--muted);
+      font-size:.88rem;
+      text-align:center;
+    }
+
+    @media (max-width: 1080px){
+      .grid{ grid-template-columns:1fr; }
+      .stats{ grid-template-columns:1fr; }
+    }
+
+    @media (max-width: 640px){
+      .shell{ padding:14px; }
+      .panel-body{ padding:14px; }
+      textarea{ min-height:280px; }
+      .brand h1{ font-size:1.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell" id="appShell">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+          <h1>Universal AI Code Review Assistant</h1>
+          <p>Multi-language static analysis, bug detection, and safe fix suggestions</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" onclick="toggleTheme()">Toggle Theme</button>
+        <button class="btn secondary" onclick="clearAll()">Clear</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Code Input</h2>
+            <span>Paste code or drop a file to analyze</span>
+          </div>
+          <span id="fileName">No file selected</span>
+        </div>
+
+        <div class="panel-body">
+          <div id="dropzone" class="dropzone">
+            <h3>Drag and drop a file here</h3>
+            <p>Supported: .py, .js, .ts, .cpp, .c, .java, and more</p>
+            <div style="margin-top:14px;">
+              <input type="file" id="fileInput" />
+            </div>
+          </div>
+
+          <textarea id="code" placeholder="Paste your code here..."></textarea>
+
+          <div class="toolbar">
+            <div class="left">
+              <select id="language">
+                <option value="auto">Auto Detect</option>
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="c">C</option>
+                <option value="go">Go</option>
+                <option value="generic">Generic</option>
+              </select>
+              <button class="btn" onclick="analyzeCode()">Analyze Code</button>
+              <button class="btn secondary" onclick="analyzeFile()">Analyze File</button>
+            </div>
+            <div class="right">
+              <button class="btn secondary" onclick="copyFixedCode()">Copy Fixed Code</button>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Issues Found</div>
+              <div class="value" id="statIssues">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Language</div>
+              <div class="value" id="statLanguage">auto</div>
+            </div>
+            <div class="stat">
+              <div class="label">Status</div>
+              <div class="value" id="statStatus">Ready</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Results</h2>
+              <span>Issues and corrected code</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="tabs">
+              <button class="tab active" data-tab="issues" onclick="switchTab('issues')">Issues</button>
+              <button class="tab" data-tab="fixed" onclick="switchTab('fixed')">Fixed Code</button>
+              <button class="tab" data-tab="summary" onclick="switchTab('summary')">Summary</button>
+            </div>
+
+            <div id="tab-issues" class="tab-content active">
+              <div id="issuesContainer" class="empty">No analysis yet.</div>
+            </div>
+
+            <div id="tab-fixed" class="tab-content">
+              <pre id="fixedCode" class="empty">Fixed code will appear here.</pre>
+            </div>
+
+            <div id="tab-summary" class="tab-content">
+              <pre id="summary" class="empty">Summary will appear here.</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Built for fast multi-language code review with interactive UI and smart analysis flow.
+    </div>
+  </div>
+
+  <script>
+    const appShell = document.getElementById('appShell');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+
+    const storedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', storedTheme);
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+
+    function clearAll() {
+      document.getElementById('code').value = '';
+      fileInput.value = '';
+      fileName.textContent = 'No file selected';
+      document.getElementById('issuesContainer').innerHTML = '<div class="empty">No analysis yet.</div>';
+      document.getElementById('fixedCode').textContent = 'Fixed code will appear here.';
+      document.getElementById('summary').textContent = 'Summary will appear here.';
+      document.getElementById('statIssues').textContent = '0';
+      document.getElementById('statLanguage').textContent = 'auto';
+      document.getElementById('statStatus').textContent = 'Ready';
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.add('active');
+    }
+
+    function renderIssues(issues) {
+      const container = document.getElementById('issuesContainer');
+      if (!issues || issues.length === 0) {
+        container.innerHTML = '<div class="empty">No issues found.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      issues.forEach(issue => {
+        const div = document.createElement('div');
+        const sev = (issue.severity || 'low').toLowerCase();
+        div.className = `issue ${sev}`;
+        div.innerHTML = `
+          <div><strong>${(issue.severity || '').toUpperCase()}</strong> | ${issue.category || 'general'}</div>
+          <div><strong>Line:</strong> ${issue.line ?? 'N/A'}</div>
+          <div><strong>Message:</strong> ${issue.message || ''}</div>
+          <div><strong>Suggestion:</strong> ${issue.suggestion || ''}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateStats(data) {
+      document.getElementById('statIssues').textContent = (data.issues || []).length;
+      document.getElementById('statLanguage').textContent = data.language || 'auto';
+      document.getElementById('statStatus').textContent = 'Done';
+    }
+
+    function renderResult(data) {
+      document.getElementById('summary').textContent = data.summary || 'No summary available.';
+      document.getElementById('fixedCode').textContent = data.fixed_code || 'No fixed code returned.';
+      renderIssues(data.issues || []);
+      updateStats(data);
+      switchTab('issues');
+    }
+
+    async function analyzeCode() {
+      const code = document.getElementById('code').value;
+      const language = document.getElementById('language').value;
+      document.getElementById('statStatus').textContent = 'Analyzing...';
+
+      const res = await fetch('/analyze', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ code, language })
+      });
+
+      const data = await res.json();
+      renderResult(data);
+    }
+
+    async function analyzeFile() {
+      if (!fileInput.files.length) return;
+
+      document.getElementById('statStatus').textContent = 'Uploading...';
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('language', document.getElementById('language').value);
+
+      const res = await fetch('/analyze-file', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      renderResult(data);
+    }
+
+    async function copyFixedCode() {
+      const text = document.getElementById('fixedCode').textContent || '';
+      await navigator.clipboard.writeText(text);
+      document.getElementById('statStatus').textContent = 'Copied';
+      setTimeout(() => document.getElementById('statStatus').textContent = 'Ready', 1200);
+    }
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        fileName.textContent = fileInput.files[0].name;
+      }
+    });
+
+    ;['dragenter','dragover'].forEach(evt => {
+      dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+    });
+
+    ;['dragleave','drop'].forEach(evt => {
+      dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+      });
+    });
+
+    dropzone.addEventListener('drop', e => {
+      const files = e.dataTransfer.files;
+      if (files && files.length) {
+        fileInput.files = files;
+        fileName.textContent = files[0].name;
+      }
+    });
+  </script>
+</body>
+</html>
